@@ -1,5 +1,8 @@
 #include <emp-tool>
 #include "malicious/malicious.h"
+
+#define SERVER_IP  "127.0.0.1"
+
 #define AES
 #ifdef AES
 static char file[] = "circuits/files/AES-non-expanded.txt";
@@ -41,7 +44,7 @@ int main(int argc, char** argv) {
 
 	double tt[] = {0,0,0,0,0,0};
 	for (int k = 0; k < num_runs; ++k) {
-		Malicious2PC<> mal(io, party, l1,l2,l3);
+		Malicious2PC<NetIO> mal(io, party, l1,l2,l3);
 		double t[6];
 		t[0]=wallClock();
 		if(party == ALICE) {

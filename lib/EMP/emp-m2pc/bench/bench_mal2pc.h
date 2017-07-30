@@ -3,6 +3,8 @@
 #include <string>
 using namespace std;
 
+#define SERVER_IP  "127.0.0.1"
+
 template<RTCktOpt rt = off>
 double bench_mal2pc_all_online(void * f, uint64_t len1, uint64_t len2, uint64_t len3, NetIO * io, uint64_t TIME, uint64_t party) {
 	double t = 0;
@@ -19,7 +21,7 @@ double bench_mal2pc_all_online(void * f, uint64_t len1, uint64_t len2, uint64_t 
 	for(uint64_t k = 0; k < TIME; ++k) {
 		io->sync();
 		double t1 = timeStamp();
-		Malicious2PC <rt> mal(io, party, len1, len2, len3);
+		Malicious2PC <NetIO, rt> mal(io, party, len1, len2, len3);
 		bool res = false;
 		if(party == ALICE) {
 			mal.alice_run(f, in1);
@@ -52,7 +54,7 @@ void bench_mal2pc_with_offline(double t[3], void * f, uint64_t len1, uint64_t le
 		bool res2 = false;
 		io->sync();
 		double t1 = timeStamp();
-		Malicious2PC<RTCktOpt::off> mal(io, party, len1, len2, len3);
+		Malicious2PC<NetIO, RTCktOpt::off> mal(io, party, len1, len2, len3);
 		if(party == ALICE) {
 			mal.alice_offline(f);
 			t[0] += (timeStamp() - t1);
