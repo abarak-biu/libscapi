@@ -4,30 +4,10 @@ export prefix=$(abspath ./install)
 CXX=g++
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 ARCH := $(shell getconf LONG_BIT)
-
-OS := $(shell uname -s)
-
-ifeq ($(OS),Darwin)
-SHARED_LIB_EXT:=.dylib
-SHARED_LIB_OPT:=-dynamiclib
-else
 SHARED_LIB_EXT:=.so
-SHARED_LIB_OPT:=-shared
-endif
-
-# Linking options, we prefer our generated shared object will be self-contained.
-ifeq ($(OS),Darwin)
-# Mac OS flags
-# unfortunately Mac OS does not support the equivalent of -no-whole-archive
-# so archives might be bigger than expected
-INCLUDE_ARCHIVES_START = -Wl,-all_load
-INCLUDE_ARCHIVES_END = 
-else
-# Linux flagscheck for Linux and run other commands
-INCLUDE_ARCHIVES_START = -Wl,-whole-archive 
+INCLUDE_ARCHIVES_START = -Wl,-whole-archive # linking options, we prefer our generated shared object will be self-contained.
 INCLUDE_ARCHIVES_END = -Wl,-no-whole-archive 
-endif
-
+SHARED_LIB_OPT:=-shared
 
 export uname_S
 export ARCH
@@ -86,27 +66,27 @@ tests:: all
 
 prepare-emp:
 	@mkdir -p $(builddir)/EMP/relic
-	@cd $(builddir)/EMP/relic && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DALIGN=16 -DARCH=X64 -DARITH=curve2251-sse -DCHECK=off -DFB_POLYN=251 -DFB_METHD="INTEG;INTEG;QUICK;QUICK;QUICK;QUICK;LOWER;SLIDE;QUICK" -DFB_PRECO=on -DFB_SQRTF=off -DEB_METHD="PROJC;LODAH;COMBD;INTER" -DEC_METHD="CHAR2" -DCOMP="-O3 -funroll-loops -fomit-frame-pointer -march=native -msse4.2 -mpclmul" -DTIMER=CYCLE -DWITH="MD;DV;BN;FB;EB;EC" -DWORD=64 $(sourcedir)/lib/EMP/relic
+	@cd $(builddir)/EMP/relic && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DALIGN=16 -DARCH=X64 -DARITH=curve2251-sse -DCHECK=off -DFB_POLYN=251 -DFB_METHD="INTEG;INTEG;QUICK;QUICK;QUICK;QUICK;LOWER;SLIDE;QUICK" -DFB_PRECO=on -DFB_SQRTF=off -DEB_METHD="PROJC;LODAH;COMBD;INTER" -DEC_METHD="CHAR2" -DCOMP="-O3 -funroll-loops -fomit-frame-pointer -march=native -msse4.2 -mpclmul" -DTIMER=CYCLE -DWITH="MD;DV;BN;FB;EB;EC" -DWORD=64 $(sourcedir)/lib/EMP/relic -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib/
 	@cd $(builddir)/EMP/relic && $(MAKE)
 	@cd $(builddir)/EMP/relic && $(MAKE) install
 	@touch prepare-emp
 
 compile-emp-tool: prepare-emp
 	@mkdir -p $(builddir)/EMP/emp-tool
-	@cd $(builddir)/EMP/emp-tool && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) $(sourcedir)/lib/EMP/emp-tool
+	@cd $(builddir)/EMP/emp-tool && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib/ $(sourcedir)/lib/EMP/emp-tool 
 	@cd $(builddir)/EMP/emp-tool && $(MAKE) install
 	@touch compile-emp-tool
 
 compile-emp-ot: compile-emp-tool
 	@mkdir -p $(builddir)/EMP/emp-ot
-	@cd $(builddir)/EMP/emp-ot && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) $(sourcedir)/lib/EMP/emp-ot
+	@cd $(builddir)/EMP/emp-ot && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib/ $(sourcedir)/lib/EMP/emp-ot
 	@cd $(builddir)/EMP/emp-ot && $(MAKE)
 	@cd $(builddir)/EMP/emp-ot && $(MAKE) install
 	@touch compile-emp-ot
 
 compile-emp-m2pc: compile-emp-tool compile-emp-ot
 	@mkdir -p $(builddir)/EMP/emp-m2pc
-	@cd $(builddir)/EMP/emp-m2pc && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) $(sourcedir)/lib/EMP/emp-m2pc
+	@cd $(builddir)/EMP/emp-m2pc && cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib/ $(sourcedir)/lib/EMP/emp-m2pc
 	@cd $(builddir)/EMP/emp-m2pc && $(MAKE)
 	@touch compile-emp-m2pc
 
@@ -116,7 +96,6 @@ compile-blake:
 	@cp -r lib/BLAKE2/sse/. $(builddir)/BLAKE2
 	@$(MAKE) -C $(builddir)/BLAKE2
 	@$(MAKE) -C $(builddir)/BLAKE2 BUILDDIR=$(builddir)  install
-
 	@cp $(builddir)/BLAKE2/libblake2.a install/lib/
 	@touch compile-blake
 
